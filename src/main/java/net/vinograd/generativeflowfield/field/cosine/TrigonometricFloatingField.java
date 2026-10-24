@@ -10,9 +10,7 @@ public class TrigonometricFloatingField implements FloatingVectorField {
         double x = coordinate.getX();
         double y = coordinate.getY();
 
-        double angle =
-                Math.sin(0.01 * x + 21 * t)
-                        + Math.cos(0.01 * y - 15 * t);
+        double angle = - 2 * Math.PI * t;
 
         return new Vector2D(
                 Math.cos(angle),

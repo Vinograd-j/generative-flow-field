@@ -24,6 +24,11 @@ public class Vector2D implements Vector2<Double> {
     }
 
     @Override
+    public Vector2<Double> perpendicular() {
+        return new Vector2D(-y, x);
+    }
+
+    @Override
     public Vector2D add(Vector2<Double> vector) {
         return new Vector2D(x + vector.getX(), y + vector.getY());
     }

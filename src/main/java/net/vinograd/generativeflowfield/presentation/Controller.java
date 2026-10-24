@@ -10,13 +10,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import net.vinograd.generativeflowfield.field.cosine.TrigonometricField;
-import net.vinograd.generativeflowfield.field.cosine.TrigonometricFloatingField;
+import net.vinograd.generativeflowfield.element.Particle;
+import net.vinograd.generativeflowfield.field.vortex.PointVortex;
+import net.vinograd.generativeflowfield.field.vortex.SpiralVortex;
 import net.vinograd.generativeflowfield.math.rational.Vector2D;
-import net.vinograd.generativeflowfield.particle.Particle;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
@@ -36,9 +35,6 @@ public class Controller {
 
     @FXML
     private Slider scaleSlider;
-
-    @FXML
-    private Slider timeSlider;
 
     @FXML
     private Slider fadeSlider;
@@ -79,7 +75,7 @@ public class Controller {
                                 Integer.toString(newValue.intValue())
                         )
         );
-        prepare();
+
 
         animationTimer = new AnimationTimer() {
 
@@ -108,21 +104,9 @@ public class Controller {
     }
 
     private void update(double dt) {
-        time += dt * timeSlider.getValue();
+        time += dt;
     }
-
-
-
-    TrigonometricFloatingField field = new TrigonometricFloatingField();
-    List<Particle> particles = new ArrayList<>();
-
-    private void prepare() {
-        Random random = new Random();
-        for (int i = 0; i < 4000; i++) {
-            particles.add(new Particle(new Vector2D(random.nextInt(0, 1200), random.nextInt(0, 1200)), colorPicker.getValue()));
-        }
-    }
-
+    
     private void render(double dt) {
 
         double width = canvas.getWidth();
@@ -139,36 +123,48 @@ public class Controller {
 
         graphics.setFill(colorPicker.getValue());
 
-        for (Particle particle : particles) {
-            Vector2D velocity = field.sample(particle.getPosition(), time);
-            particle.updatePosition(particle.getPosition().add(velocity.multiply(20 * dt)));
+        float gridStep = 40;
+        float vectorSize = 20;
 
-            double x = particle.getPosition().getX();
-            double y = particle.getPosition().getY();
+        SpiralVortex floatingField = new SpiralVortex(canvas.getWidth() / 2, canvas.getHeight() / 2, 0.7, -1);
+        for (float y = gridStep / 2; y < canvas.getHeight(); y += gridStep) {
+            for (float x = gridStep / 2; x < canvas.getWidth(); x += gridStep) {
 
-            if (x > canvas.getWidth()) {
-                x = 0;
-            } else if (x < 0) {
-                x = canvas.getWidth();
+                Vector2D position = new Vector2D(x, y);
+
+                Vector2D field = floatingField.sample(position);
+                Vector2D normalizedPosition = field.normalize();
+
+                double xEnd = x + normalizedPosition.getX() * vectorSize;
+                double yEnd = y + normalizedPosition.getY() * vectorSize;
+
+                graphics.setStroke(Color.WHITE);
+                graphics.setLineWidth(1.5);
+                graphics.strokeLine(
+                     x, y,
+                     xEnd, yEnd
+                );
+
+                double dx = xEnd - x;
+                double dy = yEnd - y;
+
+                Vector2D firstArrow = new Vector2D(-dx + dy, -dy - dx).normalize().multiply(4);
+                Vector2D secondArrow = new Vector2D(-dx - dy, dx - dy).normalize().multiply(4);
+
+                graphics.strokeLine(
+                        xEnd, yEnd,
+                        xEnd + firstArrow.getX(), yEnd + firstArrow.getY()
+                );
+
+                graphics.strokeLine(
+                        xEnd, yEnd,
+                        xEnd + secondArrow.getX(), yEnd + secondArrow.getY()
+                );
+
             }
-
-            if (y > canvas.getHeight()) {
-                y = 0;
-            } else if (y < 0) {
-                y = canvas.getHeight();
-            }
-
-            particle.updatePosition(new Vector2D(x, y));
-
-            graphics.fillOval(
-                    particle.getPosition().getX() - 5,
-                    particle.getPosition().getY() - 5,
-                    10,
-                    10
-            );
         }
-
     }
+
 
     @FXML
     private void togglePause() {

@@ -1,6 +1,5 @@
-package net.vinograd.generativeflowfield.particle;
+package net.vinograd.generativeflowfield.element;
 
-import javafx.scene.paint.Color;
 import lombok.Getter;
 import net.vinograd.generativeflowfield.math.rational.Vector2D;
 
@@ -11,9 +10,12 @@ public class Particle {
 
     private Color color;
 
-    public Particle(Vector2D initialPosition, Color color) {
-        position = initialPosition;
+    private final Vector2D size;
+
+    public Particle(Vector2D initialPosition, Color color, Vector2D size) {
+        this.position = initialPosition;
         this.color = color;
+        this.size = size;
     }
 
     public void updateColor(Color color) {
