@@ -11,6 +11,7 @@ import javafx.scene.control.Slider;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import net.vinograd.generativeflowfield.element.Particle;
+import net.vinograd.generativeflowfield.element.VisualVector;
 import net.vinograd.generativeflowfield.field.vortex.PointVortex;
 import net.vinograd.generativeflowfield.field.vortex.SpiralVortex;
 import net.vinograd.generativeflowfield.math.rational.Vector2D;
@@ -76,7 +77,6 @@ public class Controller {
                         )
         );
 
-
         animationTimer = new AnimationTimer() {
 
             private long previousTime;
@@ -106,7 +106,9 @@ public class Controller {
     private void update(double dt) {
         time += dt;
     }
-    
+
+
+
     private void render(double dt) {
 
         double width = canvas.getWidth();
@@ -124,8 +126,9 @@ public class Controller {
         graphics.setFill(colorPicker.getValue());
 
         float gridStep = 40;
-        float vectorSize = 20;
+        int vectorSize = 20;
 
+        VisualVector visualVector = new VisualVector(vectorSize, 45);
         SpiralVortex floatingField = new SpiralVortex(canvas.getWidth() / 2, canvas.getHeight() / 2, 0.7, -1);
         for (float y = gridStep / 2; y < canvas.getHeight(); y += gridStep) {
             for (float x = gridStep / 2; x < canvas.getWidth(); x += gridStep) {
@@ -135,30 +138,26 @@ public class Controller {
                 Vector2D field = floatingField.sample(position);
                 Vector2D normalizedPosition = field.normalize();
 
-                double xEnd = x + normalizedPosition.getX() * vectorSize;
-                double yEnd = y + normalizedPosition.getY() * vectorSize;
+                VisualVector.VectorComponents vectorComponents = visualVector
+                        .forVector(normalizedPosition, x, y);
+
+                double xEnd = x + normalizedPosition.getX();
+                double yEnd = y + normalizedPosition.getY();
 
                 graphics.setStroke(Color.WHITE);
                 graphics.setLineWidth(1.5);
                 graphics.strokeLine(
-                     x, y,
-                     xEnd, yEnd
-                );
-
-                double dx = xEnd - x;
-                double dy = yEnd - y;
-
-                Vector2D firstArrow = new Vector2D(-dx + dy, -dy - dx).normalize().multiply(4);
-                Vector2D secondArrow = new Vector2D(-dx - dy, dx - dy).normalize().multiply(4);
-
-                graphics.strokeLine(
-                        xEnd, yEnd,
-                        xEnd + firstArrow.getX(), yEnd + firstArrow.getY()
+                        x, y,
+                        vectorComponents.getVectorLineEnd().getX(), vectorComponents.getVectorLineEnd().getY()
                 );
 
                 graphics.strokeLine(
                         xEnd, yEnd,
-                        xEnd + secondArrow.getX(), yEnd + secondArrow.getY()
+                        xEnd + vectorComponents.getFirstArrowEnd().getX(), yEnd + vectorComponents.getFirstArrowEnd().getY()
+                );
+                graphics.strokeLine(
+                        xEnd, yEnd,
+                        xEnd + vectorComponents.getSecondArrowEnd().getX(), yEnd + vectorComponents.getSecondArrowEnd().getY()
                 );
 
             }
