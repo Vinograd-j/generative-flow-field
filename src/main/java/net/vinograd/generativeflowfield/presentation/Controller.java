@@ -12,6 +12,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import net.vinograd.generativeflowfield.element.Particle;
 import net.vinograd.generativeflowfield.element.VisualVector;
+import net.vinograd.generativeflowfield.field.integrator.EulerIntegrator;
 import net.vinograd.generativeflowfield.field.vortex.PointVortex;
 import net.vinograd.generativeflowfield.field.vortex.SpiralVortex;
 import net.vinograd.generativeflowfield.math.rational.Vector2D;
@@ -60,6 +61,7 @@ public class Controller {
     @FXML
     private void initialize() {
 
+
         graphics = canvas.getGraphicsContext2D();
 
         colorPicker.setValue(Color.CORNFLOWERBLUE);
@@ -76,6 +78,8 @@ public class Controller {
                                 Integer.toString(newValue.intValue())
                         )
         );
+
+        init();
 
         animationTimer = new AnimationTimer() {
 
@@ -107,7 +111,18 @@ public class Controller {
         time += dt;
     }
 
+    List<Particle> particles = new ArrayList<>();
 
+    Random random = new Random();
+    private void init() {
+        for (int i = 0; i < 2000; i++) {
+            particles.add(new Particle(
+                    new Vector2D(random.nextInt(0, 950), random.nextInt(0, 800)),
+                    new net.vinograd.generativeflowfield.element.Color(0, 0, 255),
+                    5
+            ));
+        }
+    }
 
     private void render(double dt) {
 
@@ -125,45 +140,56 @@ public class Controller {
 
         graphics.setFill(colorPicker.getValue());
 
-        float gridStep = 40;
         int vectorSize = 20;
 
         VisualVector visualVector = new VisualVector(vectorSize, 45);
-        SpiralVortex floatingField = new SpiralVortex(canvas.getWidth() / 2, canvas.getHeight() / 2, 0.7, -1);
-        for (float y = gridStep / 2; y < canvas.getHeight(); y += gridStep) {
-            for (float x = gridStep / 2; x < canvas.getWidth(); x += gridStep) {
+        PointVortex floatingField =
+                new PointVortex(width / 2, height / 2);
 
-                Vector2D position = new Vector2D(x, y);
+        EulerIntegrator integrator = new EulerIntegrator();
 
-                Vector2D field = floatingField.sample(position);
-                Vector2D normalizedPosition = field.normalize();
+        graphics.setFill(Color.WHITE);
 
-                VisualVector.VectorComponents vectorComponents = visualVector
-                        .forVector(normalizedPosition, x, y);
+        for (Particle particle : particles) {
 
-                double xEnd = x + normalizedPosition.getX();
-                double yEnd = y + normalizedPosition.getY();
+            Vector2D newPos = integrator.integrate(
+                    particle.getPosition(),
+                    floatingField::sample,
+                    (float) dt,
+                    1
+            );
 
-                graphics.setStroke(Color.WHITE);
-                graphics.setLineWidth(1.5);
-                graphics.strokeLine(
-                        x, y,
-                        vectorComponents.getVectorLineEnd().getX(), vectorComponents.getVectorLineEnd().getY()
-                );
+            particle.updatePosition(newPos);
 
-                graphics.strokeLine(
-                        xEnd, yEnd,
-                        xEnd + vectorComponents.getFirstArrowEnd().getX(), yEnd + vectorComponents.getFirstArrowEnd().getY()
-                );
-                graphics.strokeLine(
-                        xEnd, yEnd,
-                        xEnd + vectorComponents.getSecondArrowEnd().getX(), yEnd + vectorComponents.getSecondArrowEnd().getY()
-                );
-
-            }
+            graphics.fillOval(
+                    newPos.getX(),
+                    newPos.getY(),
+                    particle.getRadius(),
+                    particle.getRadius()
+            );
         }
-    }
+//                VisualVector.VectorComponents vectorComponents = visualVector
+//                        .forVector(normalizedDirection, x, y);
+//                double xEnd = x + vectorComponents.getVectorLineEnd().getX();
+//                double yEnd = y + vectorComponents.getVectorLineEnd().getY();
+//
+//                graphics.setStroke(Color.WHITE);
+//                graphics.setLineWidth(1.5);
+//                graphics.strokeLine(
+//                        x, y,
+//                        x + vectorComponents.getVectorLineEnd().getX(), y + vectorComponents.getVectorLineEnd().getY()
+//                );
+//
+//                graphics.strokeLine(
+//                        xEnd, yEnd,
+//                        xEnd + vectorComponents.getFirstArrowEnd().getX(), yEnd + vectorComponents.getFirstArrowEnd().getY()
+//                );
+//                graphics.strokeLine(
+//                        xEnd, yEnd,
+//                        xEnd + vectorComponents.getSecondArrowEnd().getX(), yEnd + vectorComponents.getSecondArrowEnd().getY()
+//                );
 
+    }
 
     @FXML
     private void togglePause() {

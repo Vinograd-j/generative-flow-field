@@ -10,12 +10,12 @@ public class Particle {
 
     private Color color;
 
-    private final Vector2D size;
+    private final double radius;
 
-    public Particle(Vector2D initialPosition, Color color, Vector2D size) {
+    public Particle(Vector2D initialPosition, Color color, double radius) {
         this.position = initialPosition;
         this.color = color;
-        this.size = size;
+        this.radius = radius;
     }
 
     public void updateColor(Color color) {

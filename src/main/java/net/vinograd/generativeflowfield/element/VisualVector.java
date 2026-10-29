@@ -6,16 +6,12 @@ import net.vinograd.generativeflowfield.math.Vector2;
 import net.vinograd.generativeflowfield.math.rational.Vector2D;
 
 @Getter
+@AllArgsConstructor
 public class VisualVector {
 
     private final int length;
 
     private final float arrowAngle;
-
-    public VisualVector(int length, float arrowAngle) {
-        this.length = length;
-        this.arrowAngle = arrowAngle;
-    }
 
     public VectorComponents forVector(Vector2D direction, double xStart, double yStart) {
         double xEnd = xStart + direction.getX() * length;
@@ -25,21 +21,15 @@ public class VisualVector {
         double dy = yEnd - yStart;
 
         Vector2D vector = new Vector2D(dx, dy);
-        Vector2D perp = (Vector2D) vector.perpendicular().normalize();
+        Vector2D back = vector.multiply(-1);
+        Vector2D perpendicular = (Vector2D) vector.perpendicular();
 
-        double tan = Math.tan(Math.toRadians(arrowAngle));
-        perp = perp.multiply(tan * vector.length());
+        perpendicular = perpendicular.normalize().multiply(vector.length() * Math.tan(Math.toRadians(arrowAngle)));
 
-        double perpXPoint = xStart + perp.getX();
-        double perpYPoint = yStart + perp.getY();
+        Vector2D firstArrow = perpendicular.add(back).normalize().multiply(4);
+        Vector2D secondArrow = perpendicular.multiply(-1).add(back).normalize().multiply(4);
 
-        double perpXPointNeg = xStart - perp.getX();
-        double perpYPointNeg = yStart - perp.getY();
-
-        Vector2D firstArrow = new Vector2D(xEnd - perpXPoint, yEnd - perpYPoint).normalize().multiply(5);
-        Vector2D secondArrow = new Vector2D(xEnd - perpXPointNeg, yEnd - perpYPointNeg).normalize().multiply(5);
-
-        return new VectorComponents(firstArrow, secondArrow, new Vector2D(xEnd, yEnd));
+        return new VectorComponents(firstArrow, secondArrow, vector);
     }
 
     @AllArgsConstructor
